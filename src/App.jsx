@@ -54,26 +54,7 @@ function App() {
     }
   }
 
-  // Deploy contract
-  const deployContract = async () => {
-    if (!signer) {
-      setStatus('Connect wallet first!')
-      return
-    }
-
-    try {
-      setStatus('Deploying contract...')
-      const factory = new ethers.ContractFactory(GM_ABI, GM_BYTECODE, signer)
-      const contract = await factory.deploy()
-      await contract.waitForDeployment()
-      
-      const address = await contract.getAddress()
-      setContractAddress(address)
-      setStatus('Contract deployed: ' + address)
-    } catch (error) {
-      setStatus('Deploy error: ' + error.message)
-    }
-  }
+  // ...existing code...
 
   // Send GM message
   const sendGM = async () => {
@@ -131,7 +112,7 @@ function App() {
         <div className="card">
           <div className="section">
             <h2>Deploy GM Contract</h2>
-            <button onClick={deployContract} className="btn btn-secondary" disabled={!account}>
+            <button className="btn btn-secondary" disabled>
               Deploy Contract
             </button>
             {contractAddress && (
