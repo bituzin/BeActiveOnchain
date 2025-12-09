@@ -110,8 +110,10 @@ function App() {
 
 
         <div className="card">
+          <div className="window-title-bar">
+            <span className="window-title">Deploy GM Contract</span>
+          </div>
           <div className="section">
-            <h2>Deploy GM Contract</h2>
             <button className="btn btn-secondary" disabled>
               Deploy Contract
             </button>
@@ -125,8 +127,10 @@ function App() {
         </div>
 
         <div className="card">
+          <div className="window-title-bar">
+            <span className="window-title">Or Use Existing Contract</span>
+          </div>
           <div className="section">
-            <h2>Or Use Existing Contract</h2>
             <input
               type="text"
               placeholder="Contract Address"
@@ -138,8 +142,10 @@ function App() {
         </div>
 
         <div className="card">
+          <div className="window-title-bar">
+            <span className="window-title">Send GM Message</span>
+          </div>
           <div className="section">
-            <h2>Send GM Message</h2>
             <input
               type="text"
               placeholder="Your message"
@@ -154,8 +160,10 @@ function App() {
         </div>
 
         <div className="card">
+          <div className="window-title-bar">
+            <span className="window-title">Read Last Message</span>
+          </div>
           <div className="section">
-            <h2>Read Last Message</h2>
             <button onClick={readLastGM} className="btn btn-secondary" disabled={!contractAddress}>
               Read Last GM
             </button>
@@ -170,6 +178,9 @@ function App() {
 
         {status && (
           <div className="card">
+            <div className="window-title-bar">
+              <span className="window-title">Status</span>
+            </div>
             <div className="status">
               {status}
             </div>
