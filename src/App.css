@@ -6,7 +6,7 @@
 .app {
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFE87C 50%, #FFFFFF 100%);
+  background: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,10 +14,10 @@
 }
 
 .card {
-  background: #FFFEF7;
+  background: #FFF9E3;
   border: 3px solid;
-  border-color: #ffffff #c0c0c0 #c0c0c0 #ffffff;
-  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #e0e0e0, 3px 3px 6px rgba(0,0,0,0.15);
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #c0c0c0, 3px 3px 10px rgba(0,0,0,0.25), 0 0 0 1px #d4d4d4;
   padding: 0;
   margin: 0 auto;
   max-width: 500px;
@@ -29,7 +29,7 @@
 }
 
 .window-title-bar {
-  background: linear-gradient(90deg, #FFFFFF, #FFE87C, #FFC107);
+  background: #FFC107;
   color: #2E3338;
   padding: 4px 8px;
   font-weight: bold;
@@ -82,7 +82,7 @@ h2 {
   top: 0;
   left: 0;
   height: 60px;
-  background: linear-gradient(90deg, #FFFFFF, #FFE87C);
+  background: #FFC107;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -113,29 +113,30 @@ h2 {
 }
 
 .header .connect-btn {
-  background: #35D07F;
-  color: white;
-  font-weight: 600;
-  font-size: 0.85rem;
-  border: 2px solid;
-  border-color: #ffffff #000000 #000000 #ffffff;
-  box-shadow: inset 1px 1px 0 #90ee90, inset -1px -1px 0 #1a5f3a;
-  padding: 8px 14px;
+  background: #FFC107;
+  color: #2E3338;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 2.5px solid #c0c0c0;
+  border-radius: 0;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #e6a800;
+  padding: 7px 18px 7px 18px;
   cursor: pointer;
   transition: all 0.1s;
   white-space: nowrap;
   flex-shrink: 0;
   box-sizing: border-box;
+  outline: none;
 }
 
 .header .connect-btn:hover:not(:disabled) {
-  background: #2AB871;
+  background: #FFB300;
 }
 
 .header .connect-btn:active:not(:disabled) {
-  border-color: #000000 #ffffff #ffffff #000000;
-  box-shadow: inset 1px 1px 0 #1a5f3a, inset -1px -1px 0 #90ee90;
-  padding: 9px 13px 7px 15px;
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: inset 1px 1px 0 #e6a800, inset -1px -1px 0 #fff;
+  padding: 8px 17px 6px 19px;
 }
 
 @media (max-width: 600px) {
@@ -183,7 +184,7 @@ h2 {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #FFE87C, #FFC107);
+  background: #FFC107;
   color: #2E3338;
   box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #e6a800, 2px 2px 4px rgba(0,0,0,0.15);
   text-shadow: none;
@@ -192,7 +193,7 @@ h2 {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFC107, #FFB300);
+  background: #FFB300;
 }
 
 .btn-primary:active:not(:disabled) {
@@ -200,19 +201,19 @@ h2 {
 }
 
 .btn-secondary {
-  background: linear-gradient(180deg, #FFFFFF, #FFE87C);
+  background: #FFC107;
   color: #2E3338;
-  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #e6d17a, 2px 2px 4px rgba(0,0,0,0.15);
+  box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #e6a800, 2px 2px 4px rgba(0,0,0,0.15);
   font-weight: 700;
   border-color: #ffffff #c0c0c0 #c0c0c0 #ffffff;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFFEF7, #FFE87C);
+  background: #FFB300;
 }
 
 .btn-secondary:active:not(:disabled) {
-  box-shadow: inset 1px 1px 0 #e6d17a, inset -1px -1px 0 #ffffff;
+  box-shadow: inset 1px 1px 0 #e6a800, inset -1px -1px 0 #ffffff;
 }
 
 .input {
@@ -224,7 +225,7 @@ h2 {
   box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #ffffff;
   margin: 0.5rem 0;
   box-sizing: border-box;
-  background: #FFFEF7;
+  background: #FFF9E3;
   font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
 }
 
@@ -275,7 +276,7 @@ h2 {
 }
 
 .status {
-  background: linear-gradient(90deg, #FFE87C, #FFC107);
+  background: #FFE87C;
   color: #2E3338;
   padding: 1rem;
   border: 2px solid;
