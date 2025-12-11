@@ -22,10 +22,13 @@ function App() {
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
   const [contractAddress, setContractAddress] = useState('0x423cdA1297c08cFcEC40bAcBD65AbFeF30D115e0')
-  const [message, setMessage] = useState('gm!')
+  const [message, setMessage] = useState('')
+  const [inputActive, setInputActive] = useState(false)
   const [lastMessage, setLastMessage] = useState('')
   const [lastSender, setLastSender] = useState('')
   const [status, setStatus] = useState('')
+  const [hovered, setHovered] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // Connect wallet through Reown AppKit
   const connectWallet = () => {
@@ -119,22 +122,38 @@ function App() {
   return (
     <div className="app">
       <div className="container">
-        <header className="header">
+        <header className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
           <h1 className="comic-font">Be Active Onchain</h1>
-          {isConnected && address ? (
-            <span className="account">{address.slice(0, 6)}...{address.slice(-4)}</span>
-          ) : (
-            <button onClick={connectWallet} className="connect-btn">
-              Connect
-            </button>
+          {isConnected && address && (
+            <div className="window-title-bar" style={{ padding: '2px 8px', minWidth: '120px', display: 'inline-block', margin: 0 }}>
+              <span
+                className="window-title comic-font"
+                style={{
+                  cursor: 'pointer',
+                  textDecoration: hovered || copied ? 'underline' : 'none',
+                  transition: 'text-decoration 0.2s',
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold',
+                  color: '#2E3338',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  userSelect: 'text',
+                }}
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => { setHovered(false); setCopied(false); }}
+                onClick={() => { navigator.clipboard.writeText(address); setCopied(true); }}
+              >
+                {address.slice(0, 6)}...{address.slice(-4)}
+                {copied && <span style={{ marginLeft: 8, fontSize: '0.9rem', color: '#4a4a4a' }}>copied</span>}
+              </span>
+            </div>
           )}
         </header>
 
-
-
         <div className="card">
           <div className="window-title-bar">
-            <span className="window-title">Say GM to Celo community</span>
+            <span className="window-title">Say GM to Celo Community</span>
           </div>
           <div className="section">
             <button className="btn btn-secondary" onClick={sendGM} disabled={!contractAddress}>
@@ -145,33 +164,21 @@ function App() {
 
         <div className="card">
           <div className="window-title-bar">
-            <span className="window-title">Or Use Existing Contract</span>
+            <span className="window-title">Send Your Own Message to Celo Blockchain</span>
           </div>
-          <div className="section">
+          <div className="section send-message-box">
             <input
               type="text"
-              placeholder="Contract Address"
-              value={contractAddress}
-              onChange={(e) => setContractAddress(e.target.value)}
-              className="input"
-            />
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="window-title-bar">
-            <span className="window-title">Send GM Message</span>
-          </div>
-          <div className="section">
-            <input
-              type="text"
-              placeholder="Your message"
+              placeholder={inputActive ? '' : 'Your message to Celo'}
               value={message}
+              onFocus={() => setInputActive(true)}
+              onBlur={() => { if (!message) setInputActive(false) }}
               onChange={(e) => setMessage(e.target.value)}
               className="input"
+              style={{ color: '#000' }}
             />
             <button onClick={sendGM} className="btn btn-primary" disabled={!contractAddress}>
-              Say GM
+              Send
             </button>
           </div>
         </div>
@@ -193,20 +200,6 @@ function App() {
           </div>
         </div>
 
-        {status && (
-          <div className="card">
-            <div className="window-title-bar">
-              <span className="window-title">Status</span>
-            </div>
-            <div className="status">
-              {status}
-            </div>
-          </div>
-        )}
-
-        <div className="footer">
-          <p>Celo Network • Alfajores Testnet (44787) • Mainnet (42220)</p>
-        </div>
       </div>
     </div>
   )
