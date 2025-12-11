@@ -21,7 +21,7 @@ function App() {
   const { open } = useAppKit()
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
-  const [contractAddress, setContractAddress] = useState('')
+  const [contractAddress, setContractAddress] = useState('0x423cdA1297c08cFcEC40bAcBD65AbFeF30D115e0')
   const [message, setMessage] = useState('gm!')
   const [lastMessage, setLastMessage] = useState('')
   const [lastSender, setLastSender] = useState('')
@@ -134,18 +134,12 @@ function App() {
 
         <div className="card">
           <div className="window-title-bar">
-            <span className="window-title">Deploy GM Contract</span>
+            <span className="window-title">Say GM to Celo community</span>
           </div>
           <div className="section">
-            <button className="btn btn-secondary" disabled>
-              Deploy Contract
+            <button className="btn btn-secondary" onClick={sendGM} disabled={!contractAddress}>
+              Say GM
             </button>
-            {contractAddress && (
-              <p className="contract-address">
-                Contract Address: <br/>
-                <code>{contractAddress}</code>
-              </p>
-            )}
           </div>
         </div>
 
@@ -177,7 +171,7 @@ function App() {
               className="input"
             />
             <button onClick={sendGM} className="btn btn-primary" disabled={!contractAddress}>
-              Send GM On-Chain
+              Say GM
             </button>
           </div>
         </div>

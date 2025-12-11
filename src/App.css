@@ -161,8 +161,9 @@ h2 {
 }
 
 .btn {
-  padding: 12px 24px;
-  font-size: 1rem;
+  border-radius: 0;
+  padding: 8px 28px;
+  font-size: 0.9rem;
   font-weight: 600;
   border: 2px solid;
   border-color: #ffffff #000000 #000000 #ffffff;
@@ -170,6 +171,8 @@ h2 {
   transition: all 0.1s;
   margin: 0.5rem;
   font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+  min-width: 90px;
+  max-width: 160px;
 }
 
 .btn:disabled {
@@ -178,10 +181,7 @@ h2 {
   color: #808080;
 }
 
-.btn:active:not(:disabled) {
-  border-color: #000000 #ffffff #ffffff #000000;
-  padding: 13px 23px 11px 25px;
-}
+/* .btn:active:not(:disabled) removed to keep shape consistent */
 
 .btn-primary {
   background: #FFC107;
@@ -197,7 +197,7 @@ h2 {
 }
 
 .btn-primary:active:not(:disabled) {
-  box-shadow: inset 1px 1px 0 #e6a800, inset -1px -1px 0 #ffffff;
+  background: #FFB300;
 }
 
 .btn-secondary {
@@ -213,7 +213,7 @@ h2 {
 }
 
 .btn-secondary:active:not(:disabled) {
-  box-shadow: inset 1px 1px 0 #e6a800, inset -1px -1px 0 #ffffff;
+  background: #FFB300;
 }
 
 .input {
