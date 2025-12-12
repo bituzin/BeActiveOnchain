@@ -1,5 +1,3 @@
-
-
 # GM dApp
 
 
@@ -18,7 +16,7 @@ GM dApp is a decentralized application that allows users to send "gm" (good morn
 
 ## Contract address on Celo
 
-`0xa67B24003865E0e86DBEdDEde917cCeF6a9F45cD`
+`0x202780E3661949D630D82AdD04De82edaa682635`
 
 
 ## Smart Contract (Solidity)
@@ -31,6 +29,7 @@ The `GM` contract records all greetings and provides functions to retrieve stati
 - `getDailyCount(uint256 day)` — returns the number of "gm" sent on a given day (day = timestamp / 1 days)
 - `getUserCount(address user)` — returns the number of "gm" sent by a user
 - `getUserGmTimestamps(address user)` — returns an array of timestamps for all "gm" sent by a user
+- `getLastThreeGMs()` — returns an array of the last 3 senders and their timestamps
 
 Each call to `sendGM` emits a `GMEvent` with the sender's address, message, and timestamp.
 
