@@ -2,31 +2,40 @@
 
 # GM dApp
 
-## Opis projektu
 
-GM dApp to zdecentralizowana aplikacja pozwalająca użytkownikom wysyłać powitania "gm" (good morning) na blockchainie. Każdy może wysłać dowolną liczbę "gm" dziennie, a wszystkie interakcje są publicznie rejestrowane w smart kontrakcie.
+## Project Description
 
-- Wysyłanie powitania "gm" z opcjonalną wiadomością.
-- Podgląd całkowitej liczby wysłanych "gm".
-- Statystyki dzienne: ile "gm" wysłano danego dnia.
-- Statystyki użytkownika: ile "gm" wysłał dany adres oraz historia z datami.
-- Odczyt ostatniego powitania (adres, wiadomość, data).
+GM dApp is a decentralized application that allows users to send "gm" (good morning) greetings on the blockchain. Anyone can send any number of "gm" messages per day, and all interactions are publicly recorded in the smart contract.
 
-
-## Smart kontrakt (Solidity)
-
-Kontrakt `GM` rejestruje wszystkie powitania i udostępnia funkcje do pobierania statystyk:
-
-- `sendGM(string message)` — wysyła "gm" z opcjonalną wiadomością
-- `getLastGM()` — zwraca ostatniego nadawcę, wiadomość i timestamp
-- `getTotalCount()` — zwraca całkowitą liczbę "gm"
-- `getDailyCount(uint256 day)` — zwraca liczbę "gm" danego dnia (day = timestamp / 1 days)
-- `getUserCount(address user)` — zwraca liczbę "gm" wysłanych przez użytkownika
-- `getUserGmTimestamps(address user)` — zwraca tablicę timestampów wszystkich wysłanych "gm" przez użytkownika
-
-Każde wywołanie `sendGM` emituje zdarzenie `GMEvent` z adresem nadawcy, wiadomością i timestampem.
+- Send a "gm" greeting with an optional message.
+- View the total number of "gm" sent.
+- Daily statistics: how many "gm" were sent on a given day.
+- User statistics: how many "gm" a given address has sent and their history with timestamps.
+- View the last greeting (address, message, date).
 
 
-## Licencja
+
+
+## Contract address on Celo
+
+`0xa67B24003865E0e86DBEdDEde917cCeF6a9F45cD`
+
+
+## Smart Contract (Solidity)
+
+The `GM` contract records all greetings and provides functions to retrieve statistics:
+
+- `sendGM(string message)` — sends a "gm" with an optional message
+- `getLastGM()` — returns the last sender, message, and timestamp
+- `getTotalCount()` — returns the total number of "gm"
+- `getDailyCount(uint256 day)` — returns the number of "gm" sent on a given day (day = timestamp / 1 days)
+- `getUserCount(address user)` — returns the number of "gm" sent by a user
+- `getUserGmTimestamps(address user)` — returns an array of timestamps for all "gm" sent by a user
+
+Each call to `sendGM` emits a `GMEvent` with the sender's address, message, and timestamp.
+
+
+
+## License
 
 MIT
