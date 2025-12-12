@@ -14,18 +14,25 @@ export const wagmiAdapter = new WagmiAdapter({
   projectId
 })
 
-// Create modal
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId,
-  metadata: {
-    name: 'GM Dapp',
-    description: 'Say GM on-chain on Celo blockchain',
-    url: 'https://your-app-url.com',
-    icons: ['https://your-app-url.com/icon.png']
-  },
-  features: {
-    analytics: true
+// Initialize AppKit (called from client-side only)
+let appKitInitialized = false
+
+export const initializeAppKit = () => {
+  if (typeof window !== 'undefined' && !appKitInitialized) {
+    createAppKit({
+      adapters: [wagmiAdapter],
+      networks,
+      projectId,
+      metadata: {
+        name: 'GM Dapp',
+        description: 'Say GM on-chain on Celo blockchain',
+        url: 'https://your-app-url.com',
+        icons: ['https://your-app-url.com/icon.png']
+      },
+      features: {
+        analytics: true
+      }
+    })
+    appKitInitialized = true
   }
-})
+}
