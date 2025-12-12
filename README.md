@@ -1,6 +1,27 @@
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Kontrakt GM (Solidity)
+
+Kontrakt `GM` pozwala każdemu użytkownikowi wysyłać dowolną liczbę powitań "gm" każdego dnia. Umożliwia śledzenie:
+- Całkowitej liczby wysłanych "gm" (`totalCount`)
+- Liczby "gm" wysłanych danego dnia (`getDailyCount(day)`)
+- Liczby "gm" wysłanych przez danego użytkownika (`getUserCount(address)`)
+- Historii wysyłek użytkownika z datami (`getUserGmTimestamps(address)`)
+
+### Funkcje kontraktu
+
+- `sendGM(string message)` — wysyła "gm" z opcjonalną wiadomością
+- `getLastGM()` — zwraca ostatniego nadawcę, wiadomość i timestamp
+- `getTotalCount()` — zwraca całkowitą liczbę "gm"
+- `getDailyCount(uint256 day)` — zwraca liczbę "gm" danego dnia (day = timestamp / 1 days)
+- `getUserCount(address user)` — zwraca liczbę "gm" wysłanych przez użytkownika
+- `getUserGmTimestamps(address user)` — zwraca tablicę timestampów wszystkich wysłanych "gm" przez użytkownika
+
+Każde wywołanie `sendGM` emituje zdarzenie `GMEvent` z adresem nadawcy, wiadomością i timestampem.
+# React + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
 

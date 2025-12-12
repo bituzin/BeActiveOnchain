@@ -14,15 +14,24 @@ contract GM {
     // Liczba GM wysłanych danego dnia (day = timestamp / 1 days)
     mapping(uint256 => uint256) public dailyCount;
 
+    // Całkowita liczba GM
+    uint256 public totalCount;
+
+    // Historia GM użytkownika (timestampy)
+    mapping(address => uint256[]) private userGmTimestamps;
+
     function sendGM(string calldata message) external {
         lastMessage = message;
         lastSender = msg.sender;
         lastTimestamp = block.timestamp;
 
         gmCount[msg.sender] += 1;
+        totalCount += 1;
 
         uint256 day = block.timestamp / 1 days;
         dailyCount[day] += 1;
+
+        userGmTimestamps[msg.sender].push(block.timestamp);
 
         emit GMEvent(msg.sender, message, block.timestamp);
     }
@@ -31,11 +40,21 @@ contract GM {
         return (lastSender, lastMessage, lastTimestamp);
     }
 
+    // Zwraca całkowitą liczbę GM
+    function getTotalCount() external view returns (uint256) {
+        return totalCount;
+    }
+
     function getDailyCount(uint256 day) external view returns (uint256) {
         return dailyCount[day];
     }
 
     function getUserCount(address user) external view returns (uint256) {
         return gmCount[user];
+    }
+
+    // Zwraca tablicę timestampów GM wysłanych przez użytkownika
+    function getUserGmTimestamps(address user) external view returns (uint256[] memory) {
+        return userGmTimestamps[user];
     }
 }
