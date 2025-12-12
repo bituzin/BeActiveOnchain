@@ -20,6 +20,13 @@ contract GM {
     // Historia GM użytkownika (timestampy)
     mapping(address => uint256[]) private userGmTimestamps;
 
+    // Ostatnie 3 GM (adresy i timestampy)
+    struct GMRecord {
+        address sender;
+        uint256 timestamp;
+    }
+    GMRecord[3] public lastThreeGMs;
+
     function sendGM(string calldata message) external {
         lastMessage = message;
         lastSender = msg.sender;
@@ -32,6 +39,11 @@ contract GM {
         dailyCount[day] += 1;
 
         userGmTimestamps[msg.sender].push(block.timestamp);
+
+        // Aktualizuj ostatnie 3 GM
+        lastThreeGMs[2] = lastThreeGMs[1];
+        lastThreeGMs[1] = lastThreeGMs[0];
+        lastThreeGMs[0] = GMRecord(msg.sender, block.timestamp);
 
         emit GMEvent(msg.sender, message, block.timestamp);
     }
@@ -56,5 +68,10 @@ contract GM {
     // Zwraca tablicę timestampów GM wysłanych przez użytkownika
     function getUserGmTimestamps(address user) external view returns (uint256[] memory) {
         return userGmTimestamps[user];
+    }
+
+    // Zwraca ostatnie 3 GM
+    function getLastThreeGMs() external view returns (GMRecord[3] memory) {
+        return lastThreeGMs;
     }
 }
