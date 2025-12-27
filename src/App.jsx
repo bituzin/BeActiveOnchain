@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
-import { useAccount } from 'wagmi'
+import { useAccount, useDisconnect } from 'wagmi'
 import { useAppKit } from '@reown/appkit/react'
 import './App.css'
 
@@ -21,6 +21,7 @@ const GM_BYTECODE = "0x608060405234801561000f575f80fd5b506105e88061001d5f395ff3f
 
 function App() {
   const { isConnected, address } = useAccount()
+  const { disconnect } = useDisconnect()
   const { open } = useAppKit()
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
@@ -46,9 +47,27 @@ function App() {
   const [userLastMessageTimestamp, setUserLastMessageTimestamp] = useState(null)
   const [userLastMessageText, setUserLastMessageText] = useState('')
 
+  const resetUserStats = () => {
+    setUserTodayGMCount(0)
+    setUserTotalGMCount(0)
+    setUserLastGMTimestamp(null)
+    setUserTodayMessageCount(0)
+    setUserTotalMessageCount(0)
+    setUserLastMessageTimestamp(null)
+    setUserLastMessageText('')
+  }
+
   // Connect wallet through Reown AppKit
   const connectWallet = () => {
     open()
+    setStatus('')
+  }
+
+  const handleDisconnect = () => {
+    disconnect()
+    setProvider(null)
+    setSigner(null)
+    resetUserStats()
     setStatus('')
   }
 
@@ -78,12 +97,14 @@ function App() {
     initProvider()
   }, [isConnected])
 
-  // Fetch stats when provider is ready
+  // Fetch stats when provider or address changes
   useEffect(() => {
     if (provider || signer) {
       fetchStats()
+    } else if (!address) {
+      resetUserStats()
     }
-  }, [provider, signer])
+  }, [provider, signer, address])
 
   // Send GM message
   const sendGM = async () => {
@@ -167,26 +188,16 @@ function App() {
     return new Date(Number(timestamp) * 1000).toLocaleString()
   }
 
-  const resetUserStats = () => {
-    setUserTodayGMCount(0)
-    setUserTotalGMCount(0)
-    setUserLastGMTimestamp(null)
-    setUserTodayMessageCount(0)
-    setUserTotalMessageCount(0)
-    setUserLastMessageTimestamp(null)
-    setUserLastMessageText('')
-  }
-
   // Fetch GM statistics
   const fetchStats = async () => {
     if (!contractAddress) return
 
     try {
-      const networkProvider = provider || signer?.provider
-      if (!networkProvider) return
+      const readProvider = signer ?? provider
+      const baseProvider = signer?.provider ?? provider
+      if (!readProvider || !baseProvider) return
 
-      const readConnection = signer || provider || networkProvider
-      const contract = new ethers.Contract(contractAddress, GM_ABI, readConnection)
+      const contract = new ethers.Contract(contractAddress, GM_ABI, readProvider)
       const total = await contract.getTotalCount()
       setTotalGMCount(Number(total))
       
@@ -198,32 +209,25 @@ function App() {
       const filtered = lastThree.filter(gm => gm.sender !== '0x0000000000000000000000000000000000000000')
       setLastThreeGMs(filtered)
       
-      if (address) {
+      if (address && isConnected) {
         try {
-          const iface = new ethers.Interface(GM_ABI)
-          const eventTopic = iface.getEventTopic('GMEvent')
           const normalizedAddress = ethers.getAddress(address)
-          const userTopic = ethers.zeroPadValue(normalizedAddress, 32)
-          const logs = await networkProvider.getLogs({
-            address: contractAddress,
-            topics: [eventTopic, userTopic],
-            fromBlock: 0,
-            toBlock: 'latest'
-          })
+          const filter = contract.filters.GMEvent(normalizedAddress)
+          const events = await contract.queryFilter(filter, 0, 'latest')
 
-          if (!logs.length) {
+          if (!events.length) {
             resetUserStats()
           } else {
-            const events = await Promise.all(logs.map(async (log) => {
-              const parsed = iface.parseLog(log)
-              const block = await networkProvider.getBlock(log.blockNumber)
-              return {
-                timestamp: Number(block.timestamp),
-                message: parsed.args.message || ''
-              }
-            }))
-
             const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400
+            const blockTimestampCache = new Map()
+            const getTimestamp = async (blockNumber) => {
+              if (!blockTimestampCache.has(blockNumber)) {
+                const block = await baseProvider.getBlock(blockNumber)
+                blockTimestampCache.set(blockNumber, Number(block.timestamp))
+              }
+              return blockTimestampCache.get(blockNumber)
+            }
+
             let gmTotal = 0
             let gmToday = 0
             let gmLast = null
@@ -232,16 +236,19 @@ function App() {
             let lastMessageTimestamp = null
             let lastMessageText = ''
 
-            events.forEach(({ timestamp, message }) => {
-              const text = (message || '').toString()
-              const normalized = text.trim().toLowerCase()
+            for (const event of events) {
+              const timestamp = await getTimestamp(event.blockNumber)
+              const rawText = (event.args?.message || '').toString()
+              const trimmedText = rawText.trim()
+              const normalized = trimmedText.toLowerCase()
+              const displayText = trimmedText.length ? trimmedText : 'GM'
               const isPlainGM = normalized === '' || normalized === 'gm' || normalized === 'gm!' || normalized === 'good morning'
 
               messageTotal += 1
               if (timestamp >= startOfDay) messageToday += 1
               if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
                 lastMessageTimestamp = timestamp
-                lastMessageText = text
+                lastMessageText = displayText
               }
 
               if (isPlainGM) {
@@ -251,7 +258,7 @@ function App() {
                   gmLast = timestamp
                 }
               }
-            })
+            }
 
             setUserTotalMessageCount(messageTotal)
             setUserTodayMessageCount(messageToday)
@@ -307,30 +314,43 @@ function App() {
       <div className="container">
         <header className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
           <h1 className="comic-font">Be Active Onchain</h1>
-          {isConnected && address && (
-            <div className="window-title-bar" style={{ padding: '2px 8px', minWidth: '120px', display: 'inline-block', margin: 0 }}>
-              <span
-                className="window-title comic-font"
-                style={{
-                  cursor: 'pointer',
-                  textDecoration: hovered || copied ? 'underline' : 'none',
-                  transition: 'text-decoration 0.2s',
-                  fontSize: '0.9rem',
-                  fontWeight: 'bold',
-                  color: '#2E3338',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  userSelect: 'text',
-                }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => { setHovered(false); setCopied(false); }}
-                onClick={() => { navigator.clipboard.writeText(address); setCopied(true); }}
-              >
-                {address.slice(0, 6)}...{address.slice(-4)}
-                {copied && <span style={{ marginLeft: 8, fontSize: '0.9rem', color: '#4a4a4a' }}>copied</span>}
-              </span>
+          {isConnected && address ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className="window-title-bar" style={{ padding: '2px 8px', minWidth: '160px', display: 'inline-block', margin: 0 }}>
+                <span
+                  className="window-title comic-font"
+                  style={{
+                    cursor: 'pointer',
+                    textDecoration: hovered || copied ? 'underline' : 'none',
+                    transition: 'text-decoration 0.2s',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    color: '#2E3338',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    userSelect: 'text',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                  onMouseEnter={() => setHovered(true)}
+                  onMouseLeave={() => { setHovered(false); setCopied(false); }}
+                  onClick={() => { navigator.clipboard.writeText(address); setCopied(true); }}
+                >
+                  <span style={{ color: '#2E7D32' }}>Connected</span>
+                  {address.slice(0, 6)}...{address.slice(-4)}
+                  {copied && <span style={{ fontSize: '0.9rem', color: '#4a4a4a' }}>copied</span>}
+                </span>
+              </div>
+              <button className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }} onClick={handleDisconnect}>
+                Disconnect
+              </button>
             </div>
+          ) : (
+            <button className="btn btn-primary" onClick={connectWallet}>
+              Connect
+            </button>
           )}
         </header>
 
@@ -372,6 +392,7 @@ function App() {
                   <div style={{ marginBottom: '0.4rem' }}>Today's messages: {userTodayMessageCount}</div>
                   <div style={{ marginBottom: '0.4rem' }}>All messages: {userTotalMessageCount}</div>
                   <div style={{ marginBottom: '0.4rem' }}>Last message date: {userLastMessageTimestamp ? formatDateTime(userLastMessageTimestamp) : '-'}</div>
+                  <div style={{ marginBottom: '0.2rem' }}>Last message text:</div>
                   <div style={{ fontSize: '0.85rem', marginLeft: '0.5rem', fontWeight: 400, color: '#444' }}>
                     {userLastMessageText ? `"${userLastMessageText.substring(0, 80)}${userLastMessageText.length > 80 ? '...' : ''}"` : 'No messages yet'}
                   </div>
