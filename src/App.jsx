@@ -180,11 +180,10 @@ function App() {
           top: '20%',
           left: '50%',
           transform: 'translate(-50%, 0)',
-          background: '#FFC107',
+          background: '#FFF9E3',
           padding: 16,
           borderRadius: 0,
-          border: '2px solid',
-          borderColor: '#ffffff #c0c0c0 #c0c0c0 #ffffff',
+          border: '3px solid #FFC107',
           boxShadow: 'inset 1px 1px 0 #ffffff, inset -1px -1px 0 #e6a800, 2px 2px 4px rgba(0,0,0,0.15)',
           minWidth: 180,
           maxWidth: 260,
@@ -286,6 +285,20 @@ function App() {
               <button onClick={sendGM} className="btn btn-primary" disabled={!contractAddress}>
                 Send
               </button>
+              <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#2E3338', fontWeight: 600, paddingLeft: '1rem' }}>
+                <div style={{ marginBottom: '0.5rem' }}>Today: {todayCount}</div>
+                <div style={{ marginBottom: '0.5rem' }}>Total: {totalGMCount}</div>
+                <div style={{ marginBottom: '0.3rem' }}>Last:</div>
+                {lastThreeGMs.length > 0 ? (
+                  lastThreeGMs.map((gm, idx) => (
+                    <div key={idx} style={{ fontSize: '0.85rem', marginLeft: '1rem', marginBottom: '0.2rem', fontWeight: 400 }}>
+                      {gm.sender.slice(0, 6)}...{gm.sender.slice(-4)} - {timeAgo(gm.timestamp)}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ fontSize: '0.85rem', marginLeft: '1rem', fontWeight: 400 }}>-</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

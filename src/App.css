@@ -60,7 +60,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
-  padding-top: 75px;
+  padding-top: 20px;
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
@@ -239,7 +239,7 @@ h2 {
 
 .input {
   width: 100%;
-  padding: 12px;
+  padding: 8px;
   font-size: 1rem;
   border: 2px solid;
   border-color: #c0c0c0 #ffffff #ffffff #c0c0c0;
@@ -327,7 +327,7 @@ h2 {
 @media (max-width: 768px) {
   .container {
     padding: 1rem 0.75rem;
-    padding-top: 70px;
+    padding-top: 20px;
   }
   
   .card {
