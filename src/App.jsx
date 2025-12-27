@@ -37,8 +37,14 @@ function App() {
   const [popupText, setPopupText] = useState('')
   const [todayCount, setTodayCount] = useState(0)
   const [totalGMCount, setTotalGMCount] = useState(0)
-  const [lastTimestamp, setLastTimestamp] = useState(null)
   const [lastThreeGMs, setLastThreeGMs] = useState([])
+  const [userTodayGMCount, setUserTodayGMCount] = useState(0)
+  const [userTotalGMCount, setUserTotalGMCount] = useState(0)
+  const [userLastGMTimestamp, setUserLastGMTimestamp] = useState(null)
+  const [userTodayMessageCount, setUserTodayMessageCount] = useState(0)
+  const [userTotalMessageCount, setUserTotalMessageCount] = useState(0)
+  const [userLastMessageTimestamp, setUserLastMessageTimestamp] = useState(null)
+  const [userLastMessageText, setUserLastMessageText] = useState('')
 
   // Connect wallet through Reown AppKit
   const connectWallet = () => {
@@ -62,7 +68,6 @@ function App() {
             setStatus('Please switch to Celo network!')
           } else {
             setStatus('Wallet connected!')
-            fetchStats()
           }
         } catch (error) {
           console.error('Provider initialization error:', error)
@@ -72,6 +77,13 @@ function App() {
     
     initProvider()
   }, [isConnected])
+
+  // Fetch stats when provider is ready
+  useEffect(() => {
+    if (provider || signer) {
+      fetchStats()
+    }
+  }, [provider, signer])
 
   // Send GM message
   const sendGM = async () => {
@@ -150,23 +162,112 @@ function App() {
     return `${days}d ago`
   }
 
+  const formatDateTime = (timestamp) => {
+    if (!timestamp) return '-'
+    return new Date(Number(timestamp) * 1000).toLocaleString()
+  }
+
+  const resetUserStats = () => {
+    setUserTodayGMCount(0)
+    setUserTotalGMCount(0)
+    setUserLastGMTimestamp(null)
+    setUserTodayMessageCount(0)
+    setUserTotalMessageCount(0)
+    setUserLastMessageTimestamp(null)
+    setUserLastMessageText('')
+  }
+
   // Fetch GM statistics
   const fetchStats = async () => {
     if (!contractAddress) return
 
     try {
-      const contract = new ethers.Contract(contractAddress, GM_ABI, provider || signer)
+      const networkProvider = provider || signer?.provider
+      if (!networkProvider) return
+
+      const readConnection = signer || provider || networkProvider
+      const contract = new ethers.Contract(contractAddress, GM_ABI, readConnection)
       const total = await contract.getTotalCount()
       setTotalGMCount(Number(total))
       
-      // Calculate today's day number (timestamp / 86400)
-      const today = Math.floor(Date.now() / 1000 / 86400)
-      const dailyCount = await contract.getDailyCount(today)
+      const todayDayIndex = Math.floor(Date.now() / 1000 / 86400)
+      const dailyCount = await contract.getDailyCount(todayDayIndex)
       setTodayCount(Number(dailyCount))
       
-      // Fetch last 3 GMs
       const lastThree = await contract.getLastThreeGMs()
-      setLastThreeGMs(lastThree.filter(gm => gm.sender !== '0x0000000000000000000000000000000000000000'))
+      const filtered = lastThree.filter(gm => gm.sender !== '0x0000000000000000000000000000000000000000')
+      setLastThreeGMs(filtered)
+      
+      if (address) {
+        try {
+          const iface = new ethers.Interface(GM_ABI)
+          const eventTopic = iface.getEventTopic('GMEvent')
+          const normalizedAddress = ethers.getAddress(address)
+          const userTopic = ethers.zeroPadValue(normalizedAddress, 32)
+          const logs = await networkProvider.getLogs({
+            address: contractAddress,
+            topics: [eventTopic, userTopic],
+            fromBlock: 0,
+            toBlock: 'latest'
+          })
+
+          if (!logs.length) {
+            resetUserStats()
+          } else {
+            const events = await Promise.all(logs.map(async (log) => {
+              const parsed = iface.parseLog(log)
+              const block = await networkProvider.getBlock(log.blockNumber)
+              return {
+                timestamp: Number(block.timestamp),
+                message: parsed.args.message || ''
+              }
+            }))
+
+            const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400
+            let gmTotal = 0
+            let gmToday = 0
+            let gmLast = null
+            let messageTotal = 0
+            let messageToday = 0
+            let lastMessageTimestamp = null
+            let lastMessageText = ''
+
+            events.forEach(({ timestamp, message }) => {
+              const text = (message || '').toString()
+              const normalized = text.trim().toLowerCase()
+              const isPlainGM = normalized === '' || normalized === 'gm' || normalized === 'gm!' || normalized === 'good morning'
+
+              messageTotal += 1
+              if (timestamp >= startOfDay) messageToday += 1
+              if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
+                lastMessageTimestamp = timestamp
+                lastMessageText = text
+              }
+
+              if (isPlainGM) {
+                gmTotal += 1
+                if (timestamp >= startOfDay) gmToday += 1
+                if (!gmLast || timestamp > gmLast) {
+                  gmLast = timestamp
+                }
+              }
+            })
+
+            setUserTotalMessageCount(messageTotal)
+            setUserTodayMessageCount(messageToday)
+            setUserLastMessageTimestamp(lastMessageTimestamp)
+            setUserLastMessageText(lastMessageText)
+            setUserTotalGMCount(gmTotal)
+            setUserTodayGMCount(gmToday)
+            setUserLastGMTimestamp(gmLast)
+          }
+        } catch (userStatsError) {
+          console.error('User stats fetch error:', userStatsError)
+          resetUserStats()
+        }
+      } else {
+        resetUserStats()
+      }
     } catch (error) {
       console.error('Stats fetch error:', error)
     }
@@ -262,9 +363,22 @@ function App() {
             <div className="window-title-bar">
               <span className="window-title">Your stats</span>
             </div>
-            <div className="section">
-              {/* Stats content will go here */}
-              <div style={{ color: '#888', textAlign: 'center', fontStyle: 'italic' }}>Coming soon...</div>
+            <div className="section" style={{ padding: '1.25rem', textAlign: 'left' }}>
+              {isConnected ? (
+                <div style={{ fontSize: '0.9rem', color: '#2E3338', fontWeight: 600, paddingLeft: '1rem' }}>
+                  <div style={{ marginBottom: '0.4rem' }}>Today's GM: {userTodayGMCount}</div>
+                  <div style={{ marginBottom: '0.4rem' }}>All GM: {userTotalGMCount}</div>
+                  <div style={{ marginBottom: '0.8rem' }}>Last GM date: {userLastGMTimestamp ? formatDateTime(userLastGMTimestamp) : '-'}</div>
+                  <div style={{ marginBottom: '0.4rem' }}>Today's messages: {userTodayMessageCount}</div>
+                  <div style={{ marginBottom: '0.4rem' }}>All messages: {userTotalMessageCount}</div>
+                  <div style={{ marginBottom: '0.4rem' }}>Last message date: {userLastMessageTimestamp ? formatDateTime(userLastMessageTimestamp) : '-'}</div>
+                  <div style={{ fontSize: '0.85rem', marginLeft: '0.5rem', fontWeight: 400, color: '#444' }}>
+                    {userLastMessageText ? `"${userLastMessageText.substring(0, 80)}${userLastMessageText.length > 80 ? '...' : ''}"` : 'No messages yet'}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#888', textAlign: 'center', fontStyle: 'italic' }}>Connect wallet to see your stats</div>
+              )}
             </div>
           </div>
           <div className="card" style={{ flex: 1, maxWidth: 'none' }}>
