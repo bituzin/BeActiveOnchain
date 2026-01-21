@@ -6,7 +6,7 @@ import './App.css'
 
 // ABI kontraktu GM
 const GM_ABI = [
-  "event GMEvent(address indexed sender, string message)",
+  "event GMEvent(address indexed sender, string message, uint256 timestamp)",
   "function sendGM(string calldata message) external",
   "function getLastGM() external view returns (address sender, string memory message, uint256 timestamp)",
   "function lastMessage() external view returns (string)",
@@ -245,12 +245,14 @@ function App() {
               const isPlainGM = normalized === '' || normalized === 'gm' || normalized === 'gm!' || normalized === 'good morning'
 
               if (isPlainGM) {
+                // To jest GM, więc liczniki GM rosną
                 gmTotal += 1
                 if (timestamp >= startOfDay) gmToday += 1
                 if (!gmLast || timestamp > gmLast) {
                   gmLast = timestamp
                 }
               } else {
+                // To jest message (nie GM), więc liczniki message rosną
                 messageTotal += 1
                 if (timestamp >= startOfDay) messageToday += 1
                 if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
