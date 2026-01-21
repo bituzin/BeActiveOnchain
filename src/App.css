@@ -234,7 +234,11 @@ h2 {
 }
 
 .btn-secondary:active:not(:disabled) {
+<<<<<<< HEAD
+  box-shadow: inset 1px 1px 0 #e6a800, inset -1px -1px 0 #ffffff;
+=======
   background: #FFB300;
+>>>>>>> main
 }
 
 .input {
@@ -247,7 +251,11 @@ h2 {
   margin: 0.5rem 0;
   box-sizing: border-box;
   background: #FFF9E3;
+<<<<<<< HEAD
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+=======
   font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+>>>>>>> main
 }
 
 .input:focus {

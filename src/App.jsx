@@ -6,7 +6,7 @@ import './App.css'
 
 // ABI kontraktu GM
 const GM_ABI = [
-  "event GMEvent(address indexed sender, string message)",
+  "event GMEvent(address indexed sender, string message, uint256 timestamp)",
   "function sendGM(string calldata message) external",
   "function getLastGM() external view returns (address sender, string memory message, uint256 timestamp)",
   "function lastMessage() external view returns (string)",
@@ -211,69 +211,38 @@ function App() {
       
       if (address && isConnected) {
         try {
-          const normalizedAddress = ethers.getAddress(address)
-          const filter = contract.filters.GMEvent(normalizedAddress)
-          const events = await contract.queryFilter(filter, 0, 'latest')
+          const normalizedAddress = ethers.getAddress(address);
+          // Pobierz całkowitą liczbę GM użytkownika
+          const gmTotal = await contract.getUserCount(normalizedAddress);
+          setUserTotalGMCount(Number(gmTotal));
 
-          if (!events.length) {
-            resetUserStats()
-          } else {
-            const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400
-            const blockTimestampCache = new Map()
-            const getTimestamp = async (blockNumber) => {
-              if (!blockTimestampCache.has(blockNumber)) {
-                const block = await baseProvider.getBlock(blockNumber)
-                blockTimestampCache.set(blockNumber, Number(block.timestamp))
-              }
-              return blockTimestampCache.get(blockNumber)
-            }
-
-            let gmTotal = 0
-            let gmToday = 0
-            let gmLast = null
-            let messageTotal = 0
-            let messageToday = 0
-            let lastMessageTimestamp = null
-            let lastMessageText = ''
-
-            for (const event of events) {
-              const timestamp = await getTimestamp(event.blockNumber)
-              const rawText = (event.args?.message || '').toString()
-              const trimmedText = rawText.trim()
-              const normalized = trimmedText.toLowerCase()
-              const displayText = trimmedText.length ? trimmedText : 'GM'
-              const isPlainGM = normalized === '' || normalized === 'gm' || normalized === 'gm!' || normalized === 'good morning'
-
-              messageTotal += 1
-              if (timestamp >= startOfDay) messageToday += 1
-              if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
-                lastMessageTimestamp = timestamp
-                lastMessageText = displayText
-              }
-
-              if (isPlainGM) {
-                gmTotal += 1
-                if (timestamp >= startOfDay) gmToday += 1
-                if (!gmLast || timestamp > gmLast) {
-                  gmLast = timestamp
-                }
-              }
-            }
-
-            setUserTotalMessageCount(messageTotal)
-            setUserTodayMessageCount(messageToday)
-            setUserLastMessageTimestamp(lastMessageTimestamp)
-            setUserLastMessageText(lastMessageText)
-            setUserTotalGMCount(gmTotal)
-            setUserTodayGMCount(gmToday)
-            setUserLastGMTimestamp(gmLast)
+          // Pobierz tablicę timestampów GM użytkownika
+          const gmTimestamps = await contract.getUserGmTimestamps(normalizedAddress);
+          if (gmTimestamps.length === 0) {
+            resetUserStats();
+            return;
           }
+
+          // Ostatni GM
+          const gmLast = Math.max(...gmTimestamps.map(Number));
+          setUserLastGMTimestamp(gmLast);
+
+          // GM dzisiaj
+          const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400;
+          const gmToday = gmTimestamps.filter(ts => Number(ts) >= startOfDay).length;
+          setUserTodayGMCount(gmToday);
+
+          // Pozostałe statystyki message (nie-GM) - jeśli chcesz, możesz dodać osobną funkcję w kontrakcie
+          setUserTotalMessageCount(0);
+          setUserTodayMessageCount(0);
+          setUserLastMessageTimestamp(null);
+          setUserLastMessageText('');
         } catch (userStatsError) {
-          console.error('User stats fetch error:', userStatsError)
-          resetUserStats()
+          console.error('User stats fetch error:', userStatsError);
+          resetUserStats();
         }
       } else {
-        resetUserStats()
+        resetUserStats();
       }
     } catch (error) {
       console.error('Stats fetch error:', error)
