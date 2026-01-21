@@ -244,18 +244,18 @@ function App() {
               const displayText = trimmedText.length ? trimmedText : 'GM'
               const isPlainGM = normalized === '' || normalized === 'gm' || normalized === 'gm!' || normalized === 'good morning'
 
-              messageTotal += 1
-              if (timestamp >= startOfDay) messageToday += 1
-              if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
-                lastMessageTimestamp = timestamp
-                lastMessageText = displayText
-              }
-
               if (isPlainGM) {
                 gmTotal += 1
                 if (timestamp >= startOfDay) gmToday += 1
                 if (!gmLast || timestamp > gmLast) {
                   gmLast = timestamp
+                }
+              } else {
+                messageTotal += 1
+                if (timestamp >= startOfDay) messageToday += 1
+                if (!lastMessageTimestamp || timestamp > lastMessageTimestamp) {
+                  lastMessageTimestamp = timestamp
+                  lastMessageText = displayText
                 }
               }
             }
