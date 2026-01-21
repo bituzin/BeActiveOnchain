@@ -1,16 +1,40 @@
-# React + Vite
+# GM dApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## Project Description
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+GM dApp is a decentralized application that allows users to send "gm" (good morning) greetings on the blockchain. Anyone can send any number of "gm" messages per day, and all interactions are publicly recorded in the smart contract.
 
-## React Compiler
+- Send a "gm" greeting with an optional message.
+- View the total number of "gm" sent.
+- Daily statistics: how many "gm" were sent on a given day.
+- User statistics: how many "gm" a given address has sent and their history with timestamps.
+- View the last greeting (address, message, date).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Contract address on Celo
+
+`0x202780E3661949D630D82AdD04De82edaa682635`
+
+
+## Smart Contract (Solidity)
+
+The `GM` contract records all greetings and provides functions to retrieve statistics:
+
+- `sendGM(string message)` — sends a "gm" with an optional message
+- `getLastGM()` — returns the last sender, message, and timestamp
+- `getTotalCount()` — returns the total number of "gm"
+- `getDailyCount(uint256 day)` — returns the number of "gm" sent on a given day (day = timestamp / 1 days)
+- `getUserCount(address user)` — returns the number of "gm" sent by a user
+- `getUserGmTimestamps(address user)` — returns an array of timestamps for all "gm" sent by a user
+- `getLastThreeGMs()` — returns an array of the last 3 senders and their timestamps
+
+Each call to `sendGM` emits a `GMEvent` with the sender's address, message, and timestamp.
+
+
+
+## License
+
+MIT
