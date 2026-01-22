@@ -5,16 +5,20 @@ import { useAppKit } from '@reown/appkit/react'
 import './App.css'
 
 // ABI kontraktu GM
+// ABI kontraktu GM
 const GM_ABI = [
   "event GMEvent(address indexed sender, string message, uint256 timestamp)",
-  "function sendGM(string calldata message) external",
-  "function getLastGM() external view returns (address sender, string memory message, uint256 timestamp)",
-  "function lastMessage() external view returns (string)",
-  "function lastSender() external view returns (address)",
-  "function getTotalCount() external view returns (uint256)",
-  "function getDailyCount(uint256 day) external view returns (uint256)",
-  "function getLastThreeGMs() external view returns (tuple(address sender, uint256 timestamp)[3])"
-]
+  "function sendGM(string calldata message) external"
+];
+
+// ABI kontraktu SendMessage
+const SENDMESSAGE_ABI = [
+  "event MessageSent(address indexed sender, string text, uint256 timestamp, uint256 messageId)",
+  "event UserMessageCount(address indexed user, uint256 count)",
+  "event TotalMessages(uint256 total)",
+  "event LastMessage(address indexed sender, string text, uint256 timestamp)",
+  "function sendMessage(string calldata text) external"
+];
 
 // Bytecode kontraktu GM
 const GM_BYTECODE = "0x608060405234801561000f575f80fd5b506105e88061001d5f395ff3fe608060405234801561000f575f80fd5b506004361061004a575f3560e01c80632b68b9c61461004e57806349da433e146100685780638da5cb5b14610086578063ce49e8a7146100a4575b5f80fd5b6100566100c2565b60405161005f91906103b6565b60405180910390f35b61007061014d565b60405161007d91906103b6565b60405180910390f35b61008e6101d9565b60405161009b9190610423565b60405180910390f35b6100ac6101fc565b6040516100b9929190610469565b60405180910390f35b600180546100cf90610497565b80601f01602080910402602001604051908101604052809291908181526020018280546100fb90610497565b80156101465780601f1061011d57610100808354040283529160200191610146565b820191905f5260205f20905b81548152906001019060200180831161012957829003601f168201915b5050505050905090565b6001805461015a90610497565b80601f016020809104026020016040519081016040528092919081815260200182805461018690610497565b80156101d15780601f106101a8576101008083540402835291602001916101d1565b820191905f5260205f20905b8154815290600101906020018083116101b457829003601f168201915b505050505081565b5f8054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b5f6060805f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff1660018054610238919061022e90610497565b91509150915091565b5f81519050919050565b5f82825260208201905092915050565b8281835e5f83830152505050565b5f601f19601f8301169050919050565b5f61028282610242565b61028c818561024c565b935061029c81856020860161025c565b6102a58161026a565b840191505092915050565b5f6020820190508181035f8301526102c88184610278565b905092915050565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6102f9826102d0565b9050919050565b610309816102ef565b82525050565b5f6020820190506103225f830184610300565b92915050565b5f80fd5b610335816102ef565b811461033f575f80fd5b50565b5f813590506103508161032c565b92915050565b5f6020828403121561036b5761036a610328565b5b5f61037884828501610342565b91505092915050565b5f819050919050565b61039381610381565b82525050565b5f6040820190506103ac5f830185610300565b6103b9602083018461038a565b9392505050565b5f6020820190508181035f8301526103d88184610278565b905092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602260045260245ffd5b5f600282049050600182168061042557607f821691505b602082108103610438576104376103e0565b5b50919050565b5f610448826102d0565b9050919050565b6104588161043e565b82525050565b5f6040820190506104715f83018561044f565b818103602083015261048381846102b0565b90509392505050565b5f819050815f5260205f209050919050565b5f6002820490506001821680156104b457607f821691505b6020821081036104c7576104c66103e0565b5b5091905056fea264697066735822122033e1e8c2f0b9b8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e8e864736f6c63430008140033"
@@ -25,7 +29,10 @@ function App() {
   const { open } = useAppKit()
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
-  const [contractAddress, setContractAddress] = useState('0xe890bbac24F59ab662aD9Be549A5174819617a3F')
+  // Adres kontraktu GM (Say GM)
+  const [gmContractAddress] = useState('0x202780E3661949D630D82AdD04De82edaa682635');
+  // Adres kontraktu SendMessage (Send)
+  const [sendMessageContractAddress] = useState('0xe890bbac24F59ab662aD9Be549A5174819617a3F');
   const [message, setMessage] = useState('')
   const [inputActive, setInputActive] = useState(false)
   const [lastMessage, setLastMessage] = useState('')
@@ -107,51 +114,73 @@ function App() {
   }, [provider, signer, address])
 
   // Send GM message
+  // Wyślij GM przez kontrakt GM
   const sendGM = async () => {
-    if (!contractAddress) {
-      setStatus('Deploy or enter contract address first!')
-      return
+    if (!gmContractAddress) {
+      setStatus('GM contract address not set!');
+      return;
     }
-
     if (!isConnected) {
-      open()
-      setStatus('Please connect your wallet first!')
-      return
+      open();
+      setStatus('Please connect your wallet first!');
+      return;
     }
-
     try {
-      setStatus('Sending message...')
-      
-      // Ensure we have provider and signer
+      setStatus('Sending GM...');
       let tx;
-      if (!provider || !signer) {
-        const ethProvider = new ethers.BrowserProvider(window.ethereum)
-        const ethSigner = await ethProvider.getSigner()
-        setProvider(ethProvider)
-        setSigner(ethSigner)
-        const contract = new ethers.Contract(contractAddress, GM_ABI, ethSigner)
-        tx = await contract.sendGM(message)
-      } else {
-        const contract = new ethers.Contract(contractAddress, GM_ABI, signer)
-        tx = await contract.sendGM(message)
-      }
-      setTxHash(tx.hash)
-      setPopupText('You did it!')
-      setShowPopup(true)
-      await tx.wait()
-      setStatus('Message sent on-chain!')
-      await readLastGM()
-      await fetchStats()
+      const ethProvider = provider || new ethers.BrowserProvider(window.ethereum);
+      const ethSigner = signer || await ethProvider.getSigner();
+      const contract = new ethers.Contract(gmContractAddress, GM_ABI, ethSigner);
+      tx = await contract.sendGM('gm');
+      setTxHash(tx.hash);
+      setPopupText('You did it!');
+      setShowPopup(true);
+      await tx.wait();
+      setStatus('GM sent on-chain!');
     } catch (error) {
       if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
-        setPopupText('Transaction aborted by user')
-        setTxHash(null)
-        setShowPopup(true)
+        setPopupText('Transaction aborted by user');
+        setTxHash(null);
+        setShowPopup(true);
       } else {
-        setStatus('Send error: ' + error.message)
+        setStatus('Send error: ' + error.message);
       }
     }
-  }
+  };
+
+  // Wyślij dowolną wiadomość przez kontrakt SendMessage
+  const sendMessage = async () => {
+    if (!sendMessageContractAddress) {
+      setStatus('SendMessage contract address not set!');
+      return;
+    }
+    if (!isConnected) {
+      open();
+      setStatus('Please connect your wallet first!');
+      return;
+    }
+    try {
+      setStatus('Sending message...');
+      let tx;
+      const ethProvider = provider || new ethers.BrowserProvider(window.ethereum);
+      const ethSigner = signer || await ethProvider.getSigner();
+      const contract = new ethers.Contract(sendMessageContractAddress, SENDMESSAGE_ABI, ethSigner);
+      tx = await contract.sendMessage(message);
+      setTxHash(tx.hash);
+      setPopupText('Message sent!');
+      setShowPopup(true);
+      await tx.wait();
+      setStatus('Message sent on-chain!');
+    } catch (error) {
+      if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
+        setPopupText('Transaction aborted by user');
+        setTxHash(null);
+        setShowPopup(true);
+      } else {
+        setStatus('Send error: ' + error.message);
+      }
+    }
+  };
 
   // Read last message
   const readLastGM = async () => {
@@ -329,7 +358,7 @@ function App() {
               <span className="window-title">Say GM to Celo Community</span>
             </div>
             <div className="section" style={{ padding: '1.25rem', textAlign: 'left' }}>
-              <button className="btn btn-secondary" style={{ display: 'inline-block', margin: 0 }} onClick={sendGM} disabled={!contractAddress}>
+              <button className="btn btn-secondary" style={{ display: 'inline-block', margin: 0 }} onClick={sendGM}>
                 Say GM
               </button>
               <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#2E3338', fontWeight: 600 }}>
@@ -386,7 +415,7 @@ function App() {
                 className="input"
                 style={{ color: '#000' }}
               />
-              <button onClick={sendGM} className="btn btn-primary" disabled={!contractAddress}>
+              <button onClick={sendMessage} className="btn btn-primary">
                 Send
               </button>
               <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#2E3338', fontWeight: 600, paddingLeft: '1rem' }}>
