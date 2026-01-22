@@ -217,66 +217,36 @@ function App() {
     return new Date(Number(timestamp) * 1000).toLocaleString()
   }
 
-  // Fetch GM statistics
+  // Fetch GM and Message statistics separately
   const fetchStats = async () => {
-    if (!contractAddress) return
-
     try {
-      const readProvider = signer ?? provider
-      const baseProvider = signer?.provider ?? provider
-      if (!readProvider || !baseProvider) return
+      const readProvider = signer ?? provider;
+      if (!readProvider) return;
 
-      const contract = new ethers.Contract(contractAddress, GM_ABI, readProvider)
-      const total = await contract.getTotalCount()
-      setTotalGMCount(Number(total))
-      
-      const todayDayIndex = Math.floor(Date.now() / 1000 / 86400)
-      const dailyCount = await contract.getDailyCount(todayDayIndex)
-      setTodayCount(Number(dailyCount))
-      
-      const lastThree = await contract.getLastThreeGMs()
-      const filtered = lastThree.filter(gm => gm.sender !== '0x0000000000000000000000000000000000000000')
-      setLastThreeGMs(filtered)
-      
-      if (address && isConnected) {
-        try {
-          const normalizedAddress = ethers.getAddress(address);
-          // Pobierz całkowitą liczbę GM użytkownika
-          const gmTotal = await contract.getUserCount(normalizedAddress);
-          setUserTotalGMCount(Number(gmTotal));
+      // GM stats (kontrakt GM)
+      const gmContract = new ethers.Contract(gmContractAddress, GM_ABI, readProvider);
+      const gmTotal = await gmContract.getUserCount(address);
+      setUserTotalGMCount(Number(gmTotal));
+      const gmTimestamps = await gmContract.getUserGmTimestamps(address);
+      const gmLast = gmTimestamps.length > 0 ? Math.max(...gmTimestamps.map(Number)) : null;
+      setUserLastGMTimestamp(gmLast);
+      const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400;
+      const gmToday = gmTimestamps.filter(ts => Number(ts) >= startOfDay).length;
+      setUserTodayGMCount(gmToday);
 
-          // Pobierz tablicę timestampów GM użytkownika
-          const gmTimestamps = await contract.getUserGmTimestamps(normalizedAddress);
-          if (gmTimestamps.length === 0) {
-            resetUserStats();
-            return;
-          }
-
-          // Ostatni GM
-          const gmLast = Math.max(...gmTimestamps.map(Number));
-          setUserLastGMTimestamp(gmLast);
-
-          // GM dzisiaj
-          const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400;
-          const gmToday = gmTimestamps.filter(ts => Number(ts) >= startOfDay).length;
-          setUserTodayGMCount(gmToday);
-
-          // Pozostałe statystyki message (nie-GM) - jeśli chcesz, możesz dodać osobną funkcję w kontrakcie
-          setUserTotalMessageCount(0);
-          setUserTodayMessageCount(0);
-          setUserLastMessageTimestamp(null);
-          setUserLastMessageText('');
-        } catch (userStatsError) {
-          console.error('User stats fetch error:', userStatsError);
-          resetUserStats();
-        }
-      } else {
-        resetUserStats();
-      }
+      // Message stats (kontrakt SendMessage)
+      const msgContract = new ethers.Contract(sendMessageContractAddress, SENDMESSAGE_ABI, readProvider);
+      const msgTotal = await msgContract.userMessageCount(address);
+      setUserTotalMessageCount(Number(msgTotal));
+      // Brak timestampów w publicznym mappingu, więc nie wyświetlamy lastMessageTimestamp/messageToday
+      setUserTodayMessageCount(0);
+      setUserLastMessageTimestamp(null);
+      setUserLastMessageText('');
     } catch (error) {
-      console.error('Stats fetch error:', error)
+      console.error('Stats fetch error:', error);
+      resetUserStats();
     }
-  }
+  };
 
   return (
     <div className="app">
