@@ -25,7 +25,7 @@ function App() {
   const { open } = useAppKit()
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
-  const [contractAddress, setContractAddress] = useState('0x202780E3661949D630D82AdD04De82edaa682635')
+  const [contractAddress, setContractAddress] = useState('0xe890bbac24F59ab662aD9Be549A5174819617a3F')
   const [message, setMessage] = useState('')
   const [inputActive, setInputActive] = useState(false)
   const [lastMessage, setLastMessage] = useState('')
