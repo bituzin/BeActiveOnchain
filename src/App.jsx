@@ -116,7 +116,7 @@ function App() {
     } else if (!address) {
       resetUserStats()
     }
-  }, [provider, signer, address])
+  }, [provider, signer, address, isConnected])
 
   // Send GM message
   // Wyślij GM przez kontrakt GM
@@ -142,7 +142,7 @@ function App() {
       setShowPopup(true);
       await tx.wait();
       setStatus('GM sent on-chain!');
-      await fetchStats();
+      setTimeout(() => fetchStats(), 2000);
     } catch (error) {
       if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
         setPopupText('Transaction aborted by user');
@@ -177,7 +177,7 @@ function App() {
       setShowPopup(true);
       await tx.wait();
       setStatus('Message sent on-chain!');
-      await fetchStats();
+      setTimeout(() => fetchStats(), 2000);
     } catch (error) {
       if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
         setPopupText('Transaction aborted by user');
@@ -258,9 +258,35 @@ function App() {
         const msgContract = new ethers.Contract(sendMessageContractAddress, SENDMESSAGE_ABI, readProvider);
         const msgTotal = await msgContract.userMessageCount(address);
         setUserTotalMessageCount(Number(msgTotal));
-        setUserTodayMessageCount(0);
-        setUserLastMessageTimestamp(null);
-        setUserLastMessageText('');
+        
+        // Pobierz eventy MessageSent dla użytkownika, by znaleźć ostatnią wiadomość
+        try {
+          const filter = msgContract.filters.MessageSent(address);
+          const events = await msgContract.queryFilter(filter, 0, 'latest');
+          
+          if (events.length > 0) {
+            const lastEvent = events[events.length - 1];
+            const lastMsgText = lastEvent.args.text;
+            const lastMsgTimestamp = Number(lastEvent.args.timestamp);
+            
+            setUserLastMessageText(lastMsgText);
+            setUserLastMessageTimestamp(lastMsgTimestamp);
+            
+            // Zlicz wiadomości dzisiaj
+            const startOfDay = Math.floor(Date.now() / 1000 / 86400) * 86400;
+            const todayMessages = events.filter(e => Number(e.args.timestamp) >= startOfDay);
+            setUserTodayMessageCount(todayMessages.length);
+          } else {
+            setUserTodayMessageCount(0);
+            setUserLastMessageTimestamp(null);
+            setUserLastMessageText('');
+          }
+        } catch (eventError) {
+          console.error('Message events fetch error:', eventError);
+          setUserTodayMessageCount(0);
+          setUserLastMessageTimestamp(null);
+          setUserLastMessageText('');
+        }
       } else {
         resetUserStats();
       }
