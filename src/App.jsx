@@ -8,7 +8,9 @@ import './App.css'
 // ABI kontraktu GM
 const GM_ABI = [
   "event GMEvent(address indexed sender, string message, uint256 timestamp)",
-  "function sendGM(string calldata message) external"
+  "function sendGM(string calldata message) external",
+  "function getUserCount(address user) external view returns (uint256)",
+  "function getUserGmTimestamps(address user) external view returns (uint256[])"
 ];
 
 // ABI kontraktu SendMessage
@@ -17,7 +19,8 @@ const SENDMESSAGE_ABI = [
   "event UserMessageCount(address indexed user, uint256 count)",
   "event TotalMessages(uint256 total)",
   "event LastMessage(address indexed sender, string text, uint256 timestamp)",
-  "function sendMessage(string calldata text) external"
+  "function sendMessage(string calldata text) external",
+  "function userMessageCount(address) external view returns (uint256)"
 ];
 
 // Bytecode kontraktu GM
@@ -137,6 +140,7 @@ function App() {
       setShowPopup(true);
       await tx.wait();
       setStatus('GM sent on-chain!');
+      await fetchStats();
     } catch (error) {
       if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
         setPopupText('Transaction aborted by user');
@@ -171,6 +175,7 @@ function App() {
       setShowPopup(true);
       await tx.wait();
       setStatus('Message sent on-chain!');
+      await fetchStats();
     } catch (error) {
       if (error && (error.code === 4001 || error.message?.toLowerCase().includes('user rejected'))) {
         setPopupText('Transaction aborted by user');
@@ -219,6 +224,10 @@ function App() {
 
   // Fetch GM and Message statistics separately
   const fetchStats = async () => {
+    if (!isConnected || !address) {
+      resetUserStats();
+      return;
+    }
     try {
       const readProvider = signer ?? provider;
       if (!readProvider) return;
